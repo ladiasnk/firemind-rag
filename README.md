@@ -45,7 +45,8 @@ Run once to build the knowledge base.
 ```
 .md files in /data
        ↓
-   [chunking]        ← split into ~500-char overlapping chunks
+   [chunking]        ← split into ~500‑char overlapping chunks using
+                        LangChain's RecursiveCharacterTextSplitter
        ↓
    [embedding]       ← each chunk → list of 384 numbers (semantic meaning)
        ↓
@@ -180,7 +181,7 @@ This is an intentionally simple implementation. Here's what a production system 
 
 | Area | Current | Better |
 |---|---|---|
-| **Chunking** | Simple character splitting | Recursive/semantic splitting (LangChain `RecursiveCharacterTextSplitter`) |
+| **Chunking** | LangChain `RecursiveCharacterTextSplitter` | Smaller, tuned chunks or a domain‑aware splitter |
 | **Chunk size** | Fixed 500 chars | Tuned per document type; evaluated against retrieval quality |
 | **Embeddings** | `all-MiniLM-L6-v2` (general) | Domain-fine-tuned model for fire/climate content |
 | **Retrieval** | Top-K similarity only | Hybrid search (keyword + vector), re-ranking |

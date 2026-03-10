@@ -34,29 +34,29 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 # ── Chunking ──────────────────────────────────────────────────────────────────
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+
 def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
     """
-    Split a long text into overlapping chunks.
+    Split a long text into overlapping chunks using a smarter algorithm.
 
-    Why overlap? Imagine a sentence that falls right at the boundary between
-    two chunks — without overlap, it gets split in half and neither chunk
-    has the full context. Overlap prevents this.
+    This implementation leverages LangChain's
+    :class:`RecursiveCharacterTextSplitter`, which is aware of sentence and
+    paragraph boundaries and will recursively split segments so that chunks
+    are as close to ``chunk_size`` characters as possible without breaking
+    natural language units.  Overlap between chunks is retained to preserve
+    context at boundaries.
 
-    This is a simple character-based splitter. More advanced splitters
-    (see: TODO below) respect sentence and paragraph boundaries.
-
-    TODO: Replace this with a smarter splitter like LangChain's
-    RecursiveCharacterTextSplitter — it respects paragraph and sentence
-    boundaries, which usually improves retrieval quality.
+    The function signature is unchanged so callers elsewhere in the project
+    don't need to be updated; we simply adapt the inputs to the splitter.
     """
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunk = text[start:end]
-        chunks.append(chunk.strip())
-        start += chunk_size - overlap  # step forward, but keep some overlap
-    return [c for c in chunks if len(c) > 50]  # skip tiny leftover chunks
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=overlap,
+    )
+    # .split_text returns a list of strings already stripped of whitespace.
+    return splitter.split_text(text)
 
 
 # ── Document loading ──────────────────────────────────────────────────────────

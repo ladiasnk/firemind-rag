@@ -100,15 +100,27 @@ class FireMindRAG:
 
         return chunks
 
-    def ask(self, question: str) -> dict:
+    def ask(self, question: str, history: list[dict] | None = None) -> dict:
         """
         Full RAG pipeline: question → retrieve → generate → return.
+
+        **Conversation memory support:**
+        A caller may pass ``history`` as a list of prior chat messages
+        (each a dict with ``role``/``content``) that represent the
+        multi‑turn dialogue so far.  The messages are prepended to the
+        current turn before sending to the LLM.  The Streamlit UI keeps
+        its own ``st.session_state.history`` and appends to it after each
+        question/answer pair.
 
         Returns a dict with:
           - answer: the LLM's response
           - sources: list of source filenames used
           - chunks: the raw retrieved chunks (useful for debugging)
         """
+        # optional history defaults to empty list
+        if history is None:
+            history = []
+
         # Step 1: Retrieve relevant chunks
         chunks = self.retrieve(question)
 
@@ -118,9 +130,7 @@ class FireMindRAG:
             context_block += f"\n--- Chunk {i} (from {chunk['source']}, similarity: {chunk['similarity']}) ---\n"
             context_block += chunk["text"] + "\n"
 
-        # Step 3: Build the prompt
-        # We explicitly separate "context" from "question" so the model
-        # knows what it's allowed to use vs. what it needs to answer.
+        # Step 3: Build the user message containing context + question
         user_message = f"""CONTEXT:
 {context_block}
 
@@ -128,13 +138,17 @@ QUESTION: {question}
 
 Answer based only on the context above."""
 
-        # Step 4: Generate the answer
+        # Step 4: Assemble the chat payload including system prompt,
+        # optional prior turns, and the current user message.
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+        ]
+        messages.extend(history)
+        messages.append({"role": "user", "content": user_message})
+
         response = self.llm.chat.completions.create(
             model=LLM_MODEL,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_message}
-            ],
+            messages=messages,
             temperature=0.2,    # low temperature = more factual, less creative
             max_tokens=600
         )

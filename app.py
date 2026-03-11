@@ -94,6 +94,11 @@ st.divider()
 
 # ── Main question input ───────────────────────────────────────────────────────
 
+# make sure we have a place to store the conversation history
+if "history" not in st.session_state:
+    # history will be a list of {role: ’user’/’assistant’, content: str}
+    st.session_state.history = []
+
 # Pre-fill with the clicked example, or let the user type
 default_value = selected_example if selected_example else ""
 question = st.text_input(
@@ -110,8 +115,20 @@ ask_button = st.button("Ask FireMind 🔥", type="primary", use_container_width=
 if ask_button and question.strip():
 
     with st.spinner("Searching knowledge base..."):
-        result = rag.ask(question)
+        result = rag.ask(question, history=st.session_state.history)
 
+    # append the new turn to history so it will be sent on subsequent questions
+    st.session_state.history.append({"role": "user", "content": question})
+    st.session_state.history.append({"role": "assistant", "content": result["answer"]})
+
+    # show the entire conversation, including previous turns
+    st.markdown("### Conversation")
+    for msg in st.session_state.history:
+        prefix = "**User:**" if msg["role"] == "user" else "**FireMind:**"
+        st.markdown(f"{prefix} {msg['content']}")
+    st.divider()
+
+    # then repeat the answer section (sources, chunks) for the current turn
     st.markdown("### Answer")
     st.markdown(result["answer"])
 

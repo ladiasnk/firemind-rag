@@ -35,6 +35,17 @@ Grounded Answer (with sources)
 
 This means the LLM's answers are grounded in *your* documents, not its training data. It can cite sources. It can say "I don't know" when the documents don't cover something. This makes it reliable enough to use in real applications.
 
+### Conversation Memory 🔁
+
+The previous version of FireMind reset context on every question, treating each request independently. The updated project now keeps a running history of user questions and FireMind's answers. The Streamlit UI stores that history in `st.session_state.history` and feeds it to the LLM on each query. By including past turns as additional chat messages, the model can handle follow‑up questions and maintain coherent multi‑turn dialogues. For example:
+
+```
+User: What's the fire triangle?
+FireMind: ...
+User: How does wind affect one of those sides?
+``` 
+
+In this second question FireMind still recalls the earlier turn and can answer in context rather than treating it as the first time the topic was mentioned.
 ---
 
 ## The Pipeline (Step by Step)
@@ -185,7 +196,7 @@ This is an intentionally simple implementation. Here's what a production system 
 | **Chunk size** | Fixed 500 chars | Tuned per document type; evaluated against retrieval quality |
 | **Embeddings** | `all-MiniLM-L6-v2` (general) | Domain-fine-tuned model for fire/climate content |
 | **Retrieval** | Top-K similarity only | Hybrid search (keyword + vector), re-ranking |
-| **Context** | No conversation memory | Multi-turn with message history |
+- **Context** | ✅ Multi-turn conversation memory | History is preserved in the UI and sent to the LLM as prior messages
 | **Evaluation** | Manual/eyeball | RAGAS, TruLens, or custom eval harness |
 | **Documents** | 4 markdown files | Live data feeds (NIFC, NOAA, NASA FIRMS) |
 | **Auth** | None | User auth for multi-tenant use |

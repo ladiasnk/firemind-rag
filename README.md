@@ -196,7 +196,6 @@ This is an intentionally simple implementation. Here's what a production system 
 | **Chunk size** | Fixed 500 chars | Tuned per document type; evaluated against retrieval quality |
 | **Embeddings** | `all-MiniLM-L6-v2` (general) | Domain-fine-tuned model for fire/climate content |
 | **Retrieval** | Top-K similarity only | Hybrid search (keyword + vector), re-ranking |
-- **Context** | ✅ Multi-turn conversation memory | History is preserved in the UI and sent to the LLM as prior messages
 | **Evaluation** | Manual/eyeball | RAGAS, TruLens, or custom eval harness |
 | **Documents** | 4 markdown files | Live data feeds (NIFC, NOAA, NASA FIRMS) |
 | **Auth** | None | User auth for multi-tenant use |
